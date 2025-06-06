@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadicalSpeak - Text-to-Speech</title>
+    <!-- Google Fonts for "Classically Radical" aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* CSS for the "Classically Radical" design */
+        :root {
+            --primary-color: #333; /* Dark background for classic feel */
+            --secondary-color: #FF6B6B; /* Radical pop of color (Red) */
+            --accent-color: #4ECDC4; /* Another radical accent (Teal) */
+            --text-color: #f0f0f0; /* Light text on dark background */
+            --border-color: #777;
+            --font-display: 'Playfair Display', serif; /* Classic, elegant for headings */
+            --font-mono: 'Roboto Mono', monospace; /* Radical, modern for controls/text */
+            --box-shadow-radical: 8px 8px 0px var(--secondary-color); /* Radical shadow effect */
+        }
+
+        body {
+            font-family: var(--font-mono);
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Prevent horizontal scroll on small screens */
+        }
+
+        .container {
+            background-color: #222;
+            border: 2px solid var(--border-color);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: var(--box-shadow-radical);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            position: relative; /* For pseudo-elements */
+            overflow: hidden; /* To contain pseudo-elements within the border-radius */
+            transition: all 0.3s ease; /* Smooth transition for any future changes */
+        }
+
+        /* Pseudo-elements for radical corner flair */
+        .container::before,
+        .container::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--accent-color);
+            box-sizing: border-box;
+            z-index: 1; /* Ensure they are above the background */
+        }
+
+        .container::before {
+            top: -15px;
+            left: -15px;
+            border-right: none;
+            border-bottom: none;
+            transform: rotate(45deg); /* A slight radical tilt */
+        }
+
+        .container::after {
+            bottom: -15px;
+            right: -15px;
+            border-left: none;
+            border-top: none;
+            transform: rotate(45deg);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3.5em;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            letter-spacing: 2px;
+            transition: color 0.3s ease;
+        }
+
+        .tagline {
+            font-family: var(--font-display);
+            font-size: 1.2em;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-style: italic;
+            transition: color 0.3s ease;
+        }
+
+        textarea {
+            width: calc(100% - 40px); /* Adjust for padding */
+            height: 150px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 1.1em;
+            background-color: #1a1a1a;
+            color: var(--text-color);
+            resize: vertical;
+            transition: all 0.3s ease;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5), inset 2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .controls label {
+            font-family: var(--font-mono);
+            font-size: 1.1em;
+            color: var(--accent-color);
+            margin-right: 5px;
+        }
+
+        .controls select,
+        .controls input[type="range"] {
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            color: var(--text-color);
+            appearance: none; /* Remove default styling */
+            -webkit-appearance: none;
+            width: 150px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .controls select:focus,
+        .controls input[type="range"]:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Custom styling for range input track */
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+            border-radius: 5px;
+        }
+
+        /* Custom styling for range input thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            border: 2px solid var(--text-color);
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px; /* Center thumb vertically */
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            border: 2px solid var(--text-color);
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            cursor: pointer;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .controls span {
+            font-family: var(--font-mono);
+            color: var(--text-color);
+            font-size: 0.9em;
+            min-width: 30px; /* Ensure space for value */
+            text-align: left;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 15px 30px;
+            font-family: var(--font-display); /* Classic font for buttons */
+            font-size: 1.4em;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.4);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+        }
+
+        #stop-button {
+            background-color: #888; /* Muted stop button */
+        }
+
+        #stop-button:hover {
+            background-color: #555;
+            color: var(--text-color);
+        }
+
+        .error {
+            color: var(--secondary-color);
+            margin-top: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            min-height: 1.5em; /* Reserve space to prevent layout shift */
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #aaa;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .tagline {
+                font-size: 1em;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .controls select,
+            .controls input[type="range"] {
+                width: 100%; /* Full width on small screens */
+            }
+
+            button {
+                width: calc(100% - 20px); /* Full width with margin */
+                margin-bottom: 15px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RadicalSpeak</h1>
+        <p class="tagline">Transforming text into captivating voices.</p>
+
+        <textarea id="text-input" placeholder="Enter your text here..."></textarea>
+
+        <div class="controls">
+            <label for="voice-select">Voice:</label>
+            <select id="voice-select"></select>
+
+            <label for="rate-input">Speed:</label>
+            <input type="range" id="rate-input" min="0.5" max="2" value="1" step="0.1">
+            <span id="rate-value">1x</span>
+
+            <label for="pitch-input">Pitch:</label>
+            <input type="range" id="pitch-input" min="0" max="2" value="1" step="0.1">
+            <span id="pitch-value">1x</span>
+        </div>
+
+        <button id="speak-button">Speak</button>
+        <button id="stop-button">Stop</button>
+
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 RadicalSpeak. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // JavaScript for Text-to-Speech functionality using Web Speech API
+        const textInput = document.getElementById('text-input');
+        const voiceSelect = document.getElementById('voice-select');
+        const rateInput = document.getElementById('rate-input');
+        const rateValue = document.getElementById('rate-value');
+        const pitchInput = document.getElementById('pitch-input');
+        const pitchValue = document.getElementById('pitch-value');
+        const speakButton = document.getElementById('speak-button');
+        const stopButton = document.getElementById('stop-button');
+        const errorMessage = document.getElementById('error-message');
+
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let currentUtterance = null; // To keep track of the current speech utterance
+
+        // Function to populate the voice dropdown list
+        function populateVoiceList() {
+            // Get all available voices and sort them alphabetically
+            voices = synth.getVoices().sort((a, b) => {
+                const aname = a.name.toUpperCase();
+                const bname = b.name.toUpperCase();
+                if (aname < bname) return -1;
+                if (aname == bname) return 0;
+                return +1;
+            });
+
+            voiceSelect.innerHTML = ''; // Clear existing options
+
+            // Attempt to prioritize common English male/female voices for better user experience
+            const preferredVoices = [];
+            const englishUsMale = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Google US English Male') || voice.name.includes('Microsoft David') || voice.name.includes('David')));
+            const englishUsFemale = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Google US English Female') || voice.name.includes('Microsoft Zira') || voice.name.includes('Zira')));
+
+            if (englishUsMale) preferredVoices.push(englishUsMale);
+            if (englishUsFemale) preferredVoices.push(englishUsFemale);
+
+            // Add other male and female voices (heuristic based on name)
+            voices.forEach(voice => {
+                const lowerCaseName = voice.name.toLowerCase();
+                const isMale = lowerCaseName.includes('male') || lowerCaseName.includes('david') || lowerCaseName.includes('daniel') || lowerCaseName.includes('mark');
+                const isFemale = lowerCaseName.includes('female') || lowerCaseName.includes('zira') || lowerCaseName.includes('helena') || lowerCaseName.includes('susan');
+
+                if ((isMale || isFemale) && !preferredVoices.includes(voice)) {
+                    preferredVoices.push(voice);
+                }
+            });
+
+            // Add any remaining voices
+            voices.forEach(voice => {
+                if (!preferredVoices.includes(voice)) {
+                    preferredVoices.push(voice);
+                }
+            });
+
+
+            // Populate the select element with the organized voice list
+            preferredVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                if (voice.default) {
+                    option.textContent += ' -- DEFAULT';
+                }
+                option.setAttribute('data-lang', voice.lang);
+                option.setAttribute('data-name', voice.name);
+                voiceSelect.appendChild(option);
+            });
+
+            // Set a default selected voice if available
+            if (englishUsMale) {
+                voiceSelect.value = `${englishUsMale.name} (${englishUsMale.lang})`;
+            } else if (preferredVoices.length > 0) {
+                voiceSelect.selectedIndex = 0; // Fallback to the first available voice
+            }
+        }
+
+        // Event listener for when voices are loaded (important for cross-browser compatibility)
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = populateVoiceList;
+        } else {
+            // Fallback for browsers that might not fire onvoiceschanged immediately
+            populateVoiceList();
+        }
+
+
+        // Function to initiate speech synthesis
+        function speak() {
+            // If speech is already ongoing, cancel it before starting new speech
+            if (currentUtterance && synth.speaking) {
+                synth.cancel();
+            }
+
+            // Validate if text input is empty
+            if (textInput.value.trim() === '') {
+                errorMessage.textContent = 'Please enter some text to speak.';
+                return;
+            } else {
+                errorMessage.textContent = ''; // Clear previous error messages
+            }
+
+            // Create a new SpeechSynthesisUtterance object with the text
+            currentUtterance = new SpeechSynthesisUtterance(textInput.value);
+
+            // Set the selected voice
+            const selectedVoiceName = voiceSelect.selectedOptions[0].getAttribute('data-name');
+            currentUtterance.voice = voices.find(voice => voice.name === selectedVoiceName);
+
+            // Set the speech rate and pitch from the input sliders
+            currentUtterance.rate = parseFloat(rateInput.value);
+            currentUtterance.pitch = parseFloat(pitchInput.value);
+
+            // Event handler for when speech finishes
+            currentUtterance.onend = () => {
+                console.log('Speech synthesis finished.');
+                currentUtterance = null; // Reset the utterance
+            };
+
+            // Event handler for speech errors
+            currentUtterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                errorMessage.textContent = `Speech error: ${event.error}`;
+                currentUtterance = null; // Reset the utterance on error
+            };
+
+            // Start the speech synthesis
+            synth.speak(currentUtterance);
+        }
+
+        // Function to stop ongoing speech
+        function stopSpeech() {
+            if (synth.speaking) {
+                synth.cancel(); // Cancel all ongoing speech
+                currentUtterance = null; // Reset the utterance
+                console.log('Speech synthesis stopped.');
+            }
+        }
+
+        // Event Listeners for buttons and sliders
+        speakButton.addEventListener('click', speak);
+        stopButton.addEventListener('click', stopSpeech);
+
+        // Update rate value display as slider moves
+        rateInput.addEventListener('input', () => {
+            rateValue.textContent = `${rateInput.value}x`;
+        });
+
+        // Update pitch value display as slider moves
+        pitchInput.addEventListener('input', () => {
+            pitchValue.textContent = `${pitchInput.value}x`;
+        });
+
+        // Initial population of voices if they are already available when script loads
+        if (synth.getVoices().length > 0) {
+            populateVoiceList();
+        }
+    </script>
+</body>
+</html>
